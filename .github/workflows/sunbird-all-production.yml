@@ -1,4 +1,4 @@
-name: SUNBIRD ALL STORYLINGO PROD Deployment
+name: LanguageLabs ALL STORYLINGO PROD Deployment
 
 on:
   push:
