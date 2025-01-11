@@ -379,7 +379,7 @@ function VoiceAnalyser(props) {
           }-${Date.now()}-${getContentId}-${storyline}.wav`;
           localStorage.setItem('audioFileName', audioFileName);
           const command = new PutObjectCommand({
-            Bucket: process.env.REACT_APP_AWS_s3_BUCKET_NAME,
+            Bucket: process.env.REACT_APP_AWS_S3_BUCKET_NAME,
             Key: audioFileName,
             Body: Uint8Array.from(window.atob(base64Data), (c) =>
               c.charCodeAt(0),
