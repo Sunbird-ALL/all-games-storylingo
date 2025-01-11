@@ -56,7 +56,7 @@ jobs:
           REACT_APP_STORYLINGO_MODE: ${{ vars.REACT_APP_STORYLINGO_MODE}}
           REACT_APP_AWS_S3_REGION: ${{ secrets.REACT_APP_AWS_S3_REGION }}
           REACT_APP_AWS_S3_BUCKET_URL: ${{ vars.REACT_APP_AWS_S3_BUCKET_URL }}
-          REACT_APP_AWS_S3_BUCKET_NAME: ${{ vars.REACT_APP_AWS_S3_BUCKET_NAME }}
+          REACT_APP_AWS_s3_BUCKET_NAME: ${{ vars.REACT_APP_AWS_S3_BUCKET_NAME }}
           REACT_APP_AUTHTOKEN: ${{ vars.REACT_APP_AUTHTOKEN }}
           REACT_APP_ASR_API_KEY: ${{ secrets.REACT_APP_ASR_API_KEY }}
           REACT_APP_APISLUG: ${{ vars.REACT_APP_APISLUG }}
@@ -67,12 +67,6 @@ jobs:
 
       - name: Deploy to S3 Bucket
         run: aws s3 sync ./build s3://all-tn-app-dev/assets/games/
-
-      - name: Debug Environment Variables
-        run: |
-          echo "REACT_APP_AWS_S3_BUCKET_NAME: $REACT_APP_AWS_S3_BUCKET_NAME"
-          echo "AWS_REGION: $AWS_REGION"
-          echo "secrate": ${{ vars.REACT_APP_AWS_S3_BUCKET_NAME }}
 
       - name: Cloudfront Invalidation
         uses: chetan/invalidate-cloudfront-action@master
