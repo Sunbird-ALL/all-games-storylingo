@@ -15,10 +15,13 @@ import s5 from "../assets/audio/S5.m4a";
 import s6 from "../assets/audio/S6.m4a";
 import AudioCompare from "./AudioCompare";
 import Loader from "./Loader";
+import { interactCall } from "../services/callTelemetryIntract";
+import { response } from "../services/telementryService";
+import { compareArrays } from "./helper";
 /* eslint-disable */
 
-const AudioPath= {
-  1:{
+const AudioPath = {
+  1: {
     0: v1,
     1: v2,
     2: v3,
@@ -28,18 +31,17 @@ const AudioPath= {
     6: v7,
     7: v8,
   },
-  2:{
+  2: {
     0: s1,
     1: s2,
     2: s3,
     3: s4,
     4: s5,
     5: s6,
-  }
-  
+  },
 };
-const currentIndex = localStorage.getItem('index');
-console.log('get current index', currentIndex);
+const currentIndex = localStorage.getItem("index");
+console.log("get current index", currentIndex);
 function VoiceAnalyser(props) {
   const [loadCnt, setLoadCnt] = useState(0);
   const [loader, setLoader] = useState(false);
@@ -56,9 +58,32 @@ function VoiceAnalyser(props) {
   };
 
   const playAudio = (val) => {
+    interactCall("playAudio", "", "DT", "play");
     set_temp_audio(new Audio(AudioPath[currentIndex][props.storyLine]));
     setPauseAudio(val);
   };
+
+  const DEFAULT_ASR_LANGUAGE_CODE = "ai4bharat/whisper-medium-en--gpu--t4";
+  // const HINDI_ASR_LANGUAGE_CODE = 'ai4bharat/conformer-hi-gpu--t4';
+  // const TAMIL_ASR_LANGUAGE_CODE = 'ai4bharat/conformer-multilingual-dravidian-gpu--t4';
+
+  const [asr_language_code, set_asr_language_code] = useState(
+    DEFAULT_ASR_LANGUAGE_CODE
+  );
+
+  // useEffect(() => {
+  // switch (lang_code) {
+  // case 'hi':
+  // 	set_asr_language_code(HINDI_ASR_LANGUAGE_CODE);
+  // 	break;
+  //   case 'ta':
+  // 	set_asr_language_code(TAMIL_ASR_LANGUAGE_CODE);
+  // 	break;
+  // default:
+  // 	set_asr_language_code(DEFAULT_ASR_LANGUAGE_CODE);
+  // 	break;
+  // }
+  // }, []);
 
   useEffect(() => {
     console.log("check temp audio", temp_audio && temp_audio.play());
@@ -83,11 +108,10 @@ function VoiceAnalyser(props) {
     };
   }, [temp_audio]);
 
-  useEffect(()=>{
+  useEffect(() => {
     initiateValues();
-  },[])
+  }, []);
 
-  
   useEffect(() => {
     if (loadCnt === 0) {
       getpermision();
@@ -106,7 +130,7 @@ function VoiceAnalyser(props) {
         var reader = new FileReader();
         reader.readAsDataURL(request.response);
         reader.onload = function (e) {
-          console.log("DataURL:", e.target.result);
+          // console.log("DataURL:", e.target.result);
           var base64Data = e.target.result.split(",")[1];
           setRecordedAudioBase64(base64Data);
         };
@@ -131,9 +155,12 @@ function VoiceAnalyser(props) {
   }, [ai4bharat]);
 
   const fetchASROutput = (sourceLanguage, base64Data) => {
+    const asr_api_key = process.env.REACT_APP_ASR_API_KEY;
+    const URL = process.env.REACT_APP_URL;
     let samplingrate = 30000;
     var myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
+    myHeaders.append("Authorization", asr_api_key);
     var payload = JSON.stringify({
       config: {
         language: {
@@ -158,7 +185,8 @@ function VoiceAnalyser(props) {
       body: payload,
       redirect: "follow",
     };
-    const apiURL = `https://asr-api.ai4bharat.org/asr/v1/recognize/en`;
+
+    const apiURL = `${URL}/services/inference/asr?serviceId=${asr_language_code}`;
     fetch(apiURL, requestOptions)
       .then((response) => response.text())
       .then((result) => {
@@ -192,12 +220,13 @@ function VoiceAnalyser(props) {
   //   );
   // };
   const getpermision = () => {
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(stream => {
+    navigator.mediaDevices
+      .getUserMedia({ audio: true })
+      .then((stream) => {
         console.log("Permission Granted");
         setAudioPermission(true);
       })
-      .catch(error => {
+      .catch((error) => {
         console.log("Permission Denied");
         setAudioPermission(false);
         //alert("Microphone Permission Denied");
