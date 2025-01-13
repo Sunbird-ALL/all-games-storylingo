@@ -1,7 +1,7 @@
-import React, { lazy, Suspense } from "react";
+import React, { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, HashRouter } from "react-router-dom";
 // Telemetry
-import "@project-sunbird/telemetry-sdk/index.js";
+import "@tekdi/all-telemetry-sdk/index.js";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { startEvent } from "./services/callTelemetryIntract";
 import { initialize, end } from "./services/telementryService";
@@ -13,44 +13,37 @@ function App() {
     const setFp = async () => {
       const fp = await FingerprintJS.load();
       const { visitorId } = await fp.get();
-      localStorage.setItem("did", visitorId);
+      initService(visitorId);
     };
 
     setFp();
-    const initService = () => {
-      if (localStorage.getItem("fpDetails_v2") !== null) {
-        let fpDetails_v2 = localStorage.getItem("fpDetails_v2");
-        var did = fpDetails_v2.result;
-      } else {
-        var did = localStorage.getItem("did");
-      }
+    const initService = (visitorId) => {
 
       initialize({
         context: {
           mode: process.env.REACT_APP_MODE, // To identify preview used by the user to play/edit/preview
           authToken: "", // Auth key to make  api calls
-          did: did, // Unique id to identify the device or browser
+          did: localStorage.getItem("deviceId") || visitorId, // Unique id to identify the device or browser
           uid: "anonymous",
           channel: process.env.REACT_APP_CHANNEL, // Unique id of the channel(Channel ID)
-          env: process.env.REACT_APP_env,
+          env: process.env.REACT_APP_ENV,
 
           pdata: {
             // optional
-            id: process.env.REACT_APP_id, // Producer ID. For ex: For sunbird it would be "portal" or "genie"
-            ver: process.env.REACT_APP_ver, // Version of the App
-            pid: process.env.REACT_APP_pid, // Optional. In case the component is distributed, then which instance of that component
+            id: process.env.REACT_APP_ID, // Producer ID. For ex: For sunbird it would be "portal" or "genie"
+            ver: process.env.REACT_APP_VER, // Version of the App
+            pid: process.env.REACT_APP_PID, // Optional. In case the component is distributed, then which instance of that component
           },
           timeDiff: 0, // Defines the time difference// Defines the object roll up data
-          host: process.env.REACT_APP_host, // Defines the from which domain content should be load
-          endpoint: process.env.REACT_APP_endpoint,
-          apislug: process.env.REACT_APP_apislug,
+          host: process.env.REACT_APP_HOST, // Defines the from which domain content should be load
+          endpoint: process.env.REACT_APP_ENDPOINT,
+          apislug: process.env.REACT_APP_APISLUG,
         },
         config: {},
         // tslint:disable-next-line:max-line-length
         metadata: {},
       });
     };
-    initService();
     if (!ranonce) {
       if (localStorage.getItem("contentSessionId") === null) {
         startEvent();
@@ -79,10 +72,63 @@ function App() {
   const Game = React.lazy(()=> import('./components/Game'))
   const Result = React.lazy(()=> import('./components/Result'))
 
+  function getParameter(key, location) {
+    if (key) {
+      const query = new URLSearchParams(location);
+      return query.get(key);
+    }
+  }
+
+  useEffect(() => {
+    let virtualId;
+
+    if (getParameter("virtualId", window.location.search)) {
+      virtualId = getParameter("virtualId", window.location.search);
+    } else {
+      virtualId = localStorage.getItem("virtualId");
+    }
+    localStorage.setItem("virtualId", virtualId);
+
+    const contentSessionId = getParameter(
+      "contentSessionId",
+      window.location.search
+    );
+    if (contentSessionId) {
+      localStorage.setItem("contentSessionId", contentSessionId);
+    }
+    const token = getParameter("token", window.location.search);
+    if (token) {
+      localStorage.setItem("token", token);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (window.telemetry?.syncEvents) {
+        // Attempt to run syncEvents
+        window.telemetry.syncEvents();
+      }
+      const start = Date.now();
+      while (Date.now() - start < 1000) {
+        // Busy-wait for 100ms (not ideal, but synchronous)
+      }
+    };
+
+    // Add the event listener
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    // Cleanup the event listener on component unmount
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
+
+
+
   return (
     <div className="App">
       <HashRouter>
-      <Suspense fallback={<div>Loading...</div>}> 
+      <Suspense fallback={<div>Loading...</div>}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="player" element={<Player />} />
