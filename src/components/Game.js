@@ -10,6 +10,7 @@ import VoiceAnalyser from "../utility/VoiceAnalyser";
 import SoundWave from "../utility/SoundWave";
 import { response } from "../services/telementryService";
 import { compareArrays } from "../utility/helper";
+import { usePlayers } from "../utility/helperHook";
 
 // const Story =[
 //   "A man was walking nearby to a group of elephants that was halted by a small rope tied to their front leg.",
@@ -126,10 +127,12 @@ function Game() {
       (responseEndTime - responseStartTime) / 1000
     );
 
+
     response(
       {
         // Required
-        target: teacherText, // Required. Target of the response
+        // target: teacherText, // Required. Target of the response
+        target: process.env.REACT_APP_CAPTURE_AUDIO === 'true' ? `${localStorage.getItem('audioFileName')}` : '',
         //"qid": "", // Required. Unique assessment/question id
         type: "SPEAK", // Required. Type of response. CHOOSE, DRAG, SELECT, MATCH, INPUT, SPEAK, WRITE
         values: [
@@ -159,6 +162,7 @@ function Game() {
     }
     let temp = storyLine + 1;
     setStoryLine(temp);
+    localStorage.setItem("storySentenceId",storyLine)
     let coinAudio = new Audio(coin);
     if (coinAudio !== null) {
       coinAudio.play();
@@ -187,15 +191,14 @@ function Game() {
   }, [voiceText]);
 
   console.log("check stoy line", storyLine);
-
+  const { Player1, Player2 } = usePlayers(); 
   return (
     <div className="main-container">
       <div className="top-header">
         <img
+        className="storyling-logo"
           src={logo}
-          height="25px"
           alt="logo"
-          style={{ cursor: "pointer" }}
         />
         <Link to="/">
           <img
@@ -208,21 +211,22 @@ function Game() {
       </div>
       <div>
         {storyLine <= Story.length - 1 && (
-          <img
-            src={
-              numberOfPlayers === "p1s"
-                ? playerTitle
-                : storyLine % 2 === 0
-                ? playerTitle
-                : playerTitle2
-            }
-            height="60px"
-            alt="player1"
-            style={window.screen.width < 767 ? { marginTop: "50px" } : {}}
-            className="playPlayerTitle"
-          />
+          <>
+            {numberOfPlayers === "p1s" ? (
+              <h1 className="mint player_text">
+                {Player1.student_name || "Player 1"} Turn
+              </h1>
+            ) : (
+              <h1 className="mint">
+                {(storyLine % 2 === 0 ? Player1.student_name || "Player 1" : Player2.student_name || "Player 2")
+                  }{" "}
+                Turn
+              </h1>
+            )}
+          </>
         )}
       </div>
+
       <div
         className="play-grid"
         style={
@@ -269,12 +273,17 @@ function Game() {
               />
             </div>
             <div>
-              <img
-                height="13px"
-                style={{ marginTop: "5px" }}
-                src={require(`../assets/pt1.png`)}
-                alt="pt1"
-              />
+              <p
+                style={{
+                  marginTop: "5px",
+                  color: "yellow",
+                  fontFamily: "fantasy",
+                  fontSize: "13px",
+                  fontWeight: "600",
+                }}
+              >
+                {Player1.student_name || "Player 1"}
+              </p>
             </div>
             <div style={{ color: "yellow", fontSize: "12px", fontWeight: 600 }}>
               {player1Score}
@@ -282,19 +291,21 @@ function Game() {
           </div>
         )}
         <div className="read">
+          <div className="position-set">
+          <p className="story-text">
+           {Story[storyLine] }
+           </p>
+          </div>
           <img
-            src={
-              storyLine <= Story.length - 1
-                ? require(`../assets/story${currentIndex}${storyLine}.png`)
+          src={ storyLine <= Story.length - 1 
+                ? require(`../assets/blank_text.png`)
                 : require(`../assets/over.png`)
-            }
+              }
             className={
               storyLine <= Story.length - 1 ? "read-img" : "read-img-over"
             }
             alt="read"
-            // style={storyLine <8  && window.screen.width>767? { height: "170px" } : {height:"90px !important" }}
           />
-          {/* <div className='story-txt'> {Story[storyLine]}</div> */}
           {voiceAnimate && (
             <div style={{ position: "relative", bottom: "25%" }}>
               <SoundWave />
@@ -340,12 +351,17 @@ function Game() {
               />
             </div>
             <div>
-              <img
-                height="14px"
-                style={{ marginTop: "5px" }}
-                src={require(`../assets/pt2.png`)}
-                alt="pt2"
-              />
+              <p
+                style={{
+                  marginTop: "5px",
+                  color: "yellow",
+                  fontFamily: "fantasy",
+                  fontSize: "13px",
+                  fontWeight: "600",
+                }}
+              >
+                {Player2.student_name || "Player 2"}
+              </p>
             </div>
             <div
               style={{
@@ -394,7 +410,6 @@ function Game() {
             </div>
             <div style={{ position: "relative" }}>
               <img
-                // height="13px"
                 style={{ marginTop: "10px", position: "relative" }}
                 src={require("../assets/mobileGameBar.svg").default}
                 alt="mobileBar"
