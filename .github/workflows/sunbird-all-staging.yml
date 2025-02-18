@@ -3,7 +3,7 @@ name: https://d2ce35dy7hucsx.cloudfront.net ALL STORYLINGO TN staging Deployment
 on:
   push:
     branches:
-      - release-0.3
+      - release-0.4
 
 jobs:
   deploy:
