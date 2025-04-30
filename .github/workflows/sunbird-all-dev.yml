@@ -3,7 +3,7 @@ name: https://d357v3o0fwx8le.cloudfront.net ALL STORYLINGO Deployment
 on:
   push:
     branches:
-      - release-0.3
+      - mozhigal-2.1-dev
 
 jobs:
   deploy:
